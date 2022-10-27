@@ -26,7 +26,7 @@ memory testMem(string memType, long long blSize) {
 	if (memType == "flash") {
 		string path = "D://";
 		result = int_flash(blSize, path);
-		cout << result.write << " " << result.read << endl;
+		//cout << result.write << " " << result.read << endl;
 	}
 
 	return result;
@@ -52,21 +52,19 @@ memory avTime(vector<memory> results) {
 	return sum;
 }
 
-memory disper(vector<memory> results) {
-	memory disp;
-	disp.write = 0;
-	disp.read = 0;
+vector<memory> absolute(vector<memory> results) {
+	vector<memory> abs(results.size());
 	for (int i = 0; i < results.size(); ++i) {
-		disp.write += pow(results[i].write - avTime(results).write, 2);
-		disp.read += pow(results[i].read - avTime(results).read, 2);
+		abs[i].write = fabsl(results[i].write - avTime(results).write);
+		abs[i].read = fabsl(results[i].read - avTime(results).read);
 	}
-	return disp;
+	return abs;
 }
 
 
 
 void writeCSV(string memType, long long blSize, string elemType,int launchNum, memory result,
-	memory avtime, memory avband, memory abs, memory rel) {
+	memory avtime, memory avband, vector<memory> abs, vector<memory> rel) {
 	ofstream file;
 	file.open("results.csv", std::ios::app);
 	file
@@ -75,7 +73,7 @@ void writeCSV(string memType, long long blSize, string elemType,int launchNum, m
 		<<
 		memType
 		<< ";"
-		<< blSize //
+		<< blSize / 1024.0 / 1024.0 //
 		<< ";"
 		<< elemType //ElementsType
 		<< ";"
@@ -89,9 +87,9 @@ void writeCSV(string memType, long long blSize, string elemType,int launchNum, m
 		<< ";"
 		<< avband.write// WriteBandwidth
 		<< ";"
-		<< abs.write
+		<< abs[launchNum - 1].write
 		<< ";"
-		<< rel.write
+		<< rel[launchNum - 1].write
 		<< ";"
 		<< result.read // ReadTime
 		<< ";"
@@ -99,50 +97,97 @@ void writeCSV(string memType, long long blSize, string elemType,int launchNum, m
 		<< ";"
 		<< avband.read// ReadBandwidth
 		<< ";"
-		<< abs.read
+		<< abs[launchNum - 1].read
 		<< ";"
-		<< rel.read
+		<< rel[launchNum - 1].read
 		<< endl;
 
 }
 
-void Calc(vector<memory> results, int* caches, string memType, int* mb4, int count) {
-	for (int i = 0; i < count; ++i) {
+void Calc_cach(vector<memory> results, long long* caches, string memType) {
+	for (int i = 0; i < results.size(); ++i) {
 		memory sum = sumM(results);
-		cout << fixed << sum.write << " " << sum.read << endl << endl;
+		//cout << fixed << sum.write << " " << sum.read << endl << endl;
 
 		memory avtime = avTime(results);
-		cout << fixed << avtime.write << " " << avtime.read << endl << endl;
+		//cout << "Averenge time" << endl;
+		//cout << fixed << avtime.write << " " << avtime.read << endl;
 
 		memory avband;
+		//cout << (double)(caches[i]) << endl;
 		avband.write = (double)(caches[i]) / (double)(avtime.write) / 1024.0 / 1024.0;
 		avband.read = (double)(caches[i]) / (double)(avtime.read) / 1024.0 / 1024.0;
-		cout << fixed << avband.write << " " << avband.read << endl << endl;
+		//cout << "Band" << endl;
+		//cout << fixed << avband.write << " " << avband.read << endl;
 
-		memory disp = disper(results);
+		//memory disp = disper(results);
 
-		memory abs;
-		abs.write = sqrt(disp.write / results.size());
-		abs.read = sqrt(disp.read / results.size());
+		vector<memory> abs = absolute(results);
+		//abs.write = sqrt(disp.write / results.size());
+		//abs.read = sqrt(disp.read / results.size());
 		/*abs.write = (avtime.write - sum.write) / (4 + i * 4);
 		abs.read = (avtime.read - sum.read) / (4 + i * 4);*/
-		cout << fixed << abs.write << " " << abs.read << endl << endl;
+		//cout << fixed << abs.write << " " << abs.read << endl << endl;
 
-		memory rel;
-		rel.write = abs.write / avtime.write * 10;
-		rel.read = abs.read / avtime.read * 10;
+		vector<memory> rel(results.size());
+		for (int i = 0; i < results.size(); ++i) {
+			rel[i].write = double(abs[i].write) / double(avtime.write) * 100.0;
+			rel[i].read = double(abs[i].read) / double(avtime.read) * 100.0;
+			
+		}
+		for (auto i : rel) {
+			cout << i.write << " "  << i.read << endl;
+		}
+		//cout << rel.write << " " << rel.read << endl << endl << endl;
+		writeCSV(memType, caches[i], "int", i + 1, results[i], avtime, avband, abs, rel);
+	}
+}
 
-		cout << rel.write << " " << rel.read << endl << endl << endl;
-		if(mb4 != NULL) 
-			writeCSV(memType, mb4[i], "int", i + 1,  results[i], avtime, avband, abs, rel);
-		else
-			writeCSV(memType, caches[i], "int", i + 1, results[i], avtime, avband, abs, rel);
+void Calc_mb(vector<memory> results, long long* mb4, string memType) {
+	for (int i = 0; i < results.size(); ++i) {
+		memory sum = sumM(results);
+		//cout << fixed << sum.write << " " << sum.read << endl << endl;
+
+		memory avtime = avTime(results);
+		//cout << "Averenge time" << endl;
+		//cout << fixed << avtime.write << " " << avtime.read << endl;
+
+		memory avband;
+		//cout << (double)(mb4[i]) << endl;
+		avband.write = (double)(mb4[i]) / (double)(avtime.write) / 1024.0 / 1024.0;
+		avband.read = (double)(mb4[i]) / (double)(avtime.read) / 1024.0 / 1024.0;
+		//cout << "Band" << endl;
+		//cout << fixed << avband.write << " " << avband.read << endl;
+
+		//memory disp = disper(results);
+
+		vector<memory> abs = absolute(results);
+		//abs.write = sqrt(disp.write / results.size());
+		//abs.read = sqrt(disp.read / results.size());
+		/*abs.write = (avtime.write - sum.write) / (4 + i * 4);
+		abs.read = (avtime.read - sum.read) / (4 + i * 4);*/
+		//cout << fixed << abs.write << " " << abs.read << endl << endl;
+
+		vector<memory> rel(results.size());
+		for (int i = 0; i < results.size(); ++i) {
+			rel[i].write = double(abs[i].write) / double(avtime.write) * 100.0;
+			rel[i].read = double(abs[i].read) / double(avtime.read) * 100.0;
+		}
+
+		for (auto i : rel) {
+			cout << i.write << " " << i.read << endl;
+		}
+		//rel.write = abs.write / avtime.write * 100;
+		//rel.read = abs.read / avtime.read * 100;
+		//cout << "Relative" << endl;
+		//cout << rel.write << " " << rel.read << endl;
+		writeCSV(memType, mb4[i], "int", i + 1, results[i], avtime, avband, abs, rel);
 	}
 }
 
 
 int main() {
-	int* caches = new int[5];
+	long long* caches = new long long[5];
 	caches[0] = 64;
 	caches[1] = 320 * 1024;
 	caches[2] = 2 * 1024 * 1024;
@@ -158,15 +203,15 @@ int main() {
 		//cout << setprecision(9) << result[0].write << " " << result[0].read << " " << result[1].write << " " << result[1].read << " " << result[2].write << " " << result[2].read << " " << result[3].write << " " << result[3].read << endl;
 	}
 
-	Calc(results, caches, "RAM", NULL, 5);
+	Calc_cach(results, caches, "RAM");
 	//launchNum = 1;
 
 	vector<memory> results2;
 	vector<memory> results3;
 	//int mb4 = 4 * 1024 * 1024;
-	int mb4[20];
+	long long mb4[20];
 	for (int i = 0; i < 20; ++i) {
-		mb4[i] = 4 * 1024 * 1024 + i * 4 * 1024 * 1024;
+		mb4[i] = 4 * 1024 * 1024 + (long long)i * 4 * 1024 * 1024;
 	}
 
 	for (int i = 0; i < 20; ++i) {
@@ -181,7 +226,7 @@ int main() {
 		//cout << setprecision(9) << result[0].write << " " << result[0].read << " " << result[1].write << " " << result[1].read << " " << result[2].write << " " << result[2].read << " " << result[3].write << " " << result[3].read << endl;
 	}
 	//launchNum = 1;
-	Calc(results2, caches, "SSD", mb4, 20);
-	Calc(results3, caches, "flash", mb4, 20);
+	Calc_mb(results2, mb4, "SSD");
+	Calc_mb(results3, mb4, "flash");
 
 }
