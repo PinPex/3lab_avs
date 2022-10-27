@@ -9,7 +9,12 @@ memory int_flash(long long blSize, string pathFlash) {
 	memory time;
 	pathFlash += "1.dat";
 	FILE* file = fopen(pathFlash.c_str(), "wb");
-
+	if (!file) {
+		time.write = 0;
+		time.read = 0;
+		cout << "Error, flash is absent" << endl;
+		return time;
+	}
 	//std::fstream file;
 	//file.open(pathFlash, std::ios::app | std::ios::binary);
 

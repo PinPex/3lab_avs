@@ -10,7 +10,7 @@
 #include <iomanip>
 #include <vector>
 
-int launchNum = 1;
+//int launchNum = 1;
 
 memory testMem(string memType, long long blSize) {
 	srand(time(0));
@@ -65,7 +65,7 @@ memory disper(vector<memory> results) {
 
 
 
-void writeCSV(string memType, long long blSize, string elemType, memory result,
+void writeCSV(string memType, long long blSize, string elemType,int launchNum, memory result,
 	memory avtime, memory avband, memory abs, memory rel) {
 	ofstream file;
 	file.open("results.csv", std::ios::app);
@@ -115,8 +115,8 @@ void Calc(vector<memory> results, int* caches, string memType, int* mb4, int cou
 		cout << fixed << avtime.write << " " << avtime.read << endl << endl;
 
 		memory avband;
-		avband.write = caches[i] / avtime.write / 1024 / 1024;
-		avband.read = caches[i] / avtime.read / 1024 / 1024;
+		avband.write = (double)(caches[i]) / (double)(avtime.write) / 1024.0 / 1024.0;
+		avband.read = (double)(caches[i]) / (double)(avtime.read) / 1024.0 / 1024.0;
 		cout << fixed << avband.write << " " << avband.read << endl << endl;
 
 		memory disp = disper(results);
@@ -134,10 +134,9 @@ void Calc(vector<memory> results, int* caches, string memType, int* mb4, int cou
 
 		cout << rel.write << " " << rel.read << endl << endl << endl;
 		if(mb4 != NULL) 
-			writeCSV(memType, mb4[i], "int", results[i], avtime, avband, abs, rel);
+			writeCSV(memType, mb4[i], "int", i + 1,  results[i], avtime, avband, abs, rel);
 		else
-			writeCSV(memType, caches[i], "int", results[i], avtime, avband, abs, rel);
-		launchNum++;
+			writeCSV(memType, caches[i], "int", i + 1, results[i], avtime, avband, abs, rel);
 	}
 }
 
@@ -160,6 +159,7 @@ int main() {
 	}
 
 	Calc(results, caches, "RAM", NULL, 5);
+	//launchNum = 1;
 
 	vector<memory> results2;
 	vector<memory> results3;
@@ -171,10 +171,16 @@ int main() {
 
 	for (int i = 0; i < 20; ++i) {
 		results2.push_back(testMem("SSD", mb4[i]));
+		//cout << "Chlen" << endl;
+		//cout << setprecision(9) << result[0].write << " " << result[0].read << " " << result[1].write << " " << result[1].read << " " << result[2].write << " " << result[2].read << " " << result[3].write << " " << result[3].read << endl;
+	}
+	//launchNum = 1;
+	for (int i = 0; i < 20; ++i) {
 		results3.push_back(testMem("flash", mb4[i]));
 		//cout << "Chlen" << endl;
 		//cout << setprecision(9) << result[0].write << " " << result[0].read << " " << result[1].write << " " << result[1].read << " " << result[2].write << " " << result[2].read << " " << result[3].write << " " << result[3].read << endl;
 	}
+	//launchNum = 1;
 	Calc(results2, caches, "SSD", mb4, 20);
 	Calc(results3, caches, "flash", mb4, 20);
 
