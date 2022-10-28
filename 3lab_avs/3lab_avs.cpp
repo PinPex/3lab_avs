@@ -16,7 +16,7 @@ memory testMem(string memType, long long blSize) {
 	srand(time(0));
 
 	memory result;
-
+	
 	if (memType == "RAM") {
 		result = int_RAM(blSize);
 	}
@@ -131,8 +131,8 @@ void Calc_cach(vector<memory> results, long long* caches, string memType) {
 
 		vector<memory> rel(results.size());
 		for (int i = 0; i < results.size(); ++i) {
-			rel[i].write = double(abs[i].write) / double(avtime.write) * 100.0;
-			rel[i].read = double(abs[i].read) / double(avtime.read) * 100.0;
+			rel[i].write = double(abs[i].write) / double(avtime.write) * 10.0;
+			rel[i].read = double(abs[i].read) / double(avtime.read) * 10.0;
 			
 		}
 		for (auto i : rel) {
@@ -170,8 +170,8 @@ void Calc_mb(vector<memory> results, long long* mb4, string memType) {
 
 		vector<memory> rel(results.size());
 		for (int i = 0; i < results.size(); ++i) {
-			rel[i].write = double(abs[i].write) / double(avtime.write) * 100.0;
-			rel[i].read = double(abs[i].read) / double(avtime.read) * 100.0;
+			rel[i].write = double(abs[i].write) / double(avtime.write) * 10.0;
+			rel[i].read = double(abs[i].read) / double(avtime.read) * 10.0;
 		}
 
 		for (auto i : rel) {
